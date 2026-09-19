@@ -66,3 +66,13 @@ def health_check():
         "version": settings.VERSION,
         "mode": "Research Demonstration Platform"
     }
+
+
+# Mount built frontend static assets if available
+frontend_dist = settings.BASE_DIR / "frontend" / "dist"
+if frontend_dist.exists():
+    from fastapi.staticfiles import StaticFiles
+    from starlette.exceptions import HTTPException as StarletteHTTPException
+    
+    app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="frontend")
+
