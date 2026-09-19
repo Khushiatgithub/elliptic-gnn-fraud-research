@@ -1,0 +1,8 @@
+Metric,Count,Description
+Total Features,165,93 local + 72 aggregated features
+Local Features,93,Transaction-specific local attributes
+Aggregated Features,72,1-hop neighborhood aggregated statistics
+Constant Features (Var = 0),0,Features with zero variance across all nodes
+Near-Zero Variance (Var < 1e-5),0,Quasi-constant features
+Exact Duplicate Feature Pairs,0,Identical column pairs
+Highly Collinear Pairs (|r| >= 0.95),103,Pairs exhibiting extreme linear dependence

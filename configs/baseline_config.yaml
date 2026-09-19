@@ -1,0 +1,58 @@
+# Configuration for Phase 2: Conventional Machine Learning Baselines
+
+experiment:
+  name: "phase2_conventional_baselines"
+  seeds: [42, 123, 456, 789, 999]
+  num_seeds: 5
+
+splits:
+  train_timesteps: [1, 34]
+  val_timesteps: [35, 39]
+  test_timesteps: [40, 49]
+
+feature_configurations:
+  local_only:
+    name: "Local Features Only"
+    num_features: 93
+    prefix: "local_feat_"
+  full_features:
+    name: "Full Features (Local + Aggregated)"
+    num_features: 165
+    prefix: ["local_feat_", "agg_feat_"]
+
+models:
+  logistic_regression:
+    max_iter: 1000
+    C: 1.0
+    solver: "lbfgs"
+  
+  random_forest:
+    n_estimators: 100
+    max_depth: 15
+    min_samples_split: 5
+    min_samples_leaf: 2
+    n_jobs: -1
+    
+  xgboost:
+    n_estimators: 100
+    max_depth: 6
+    learning_rate: 0.1
+    subsample: 0.8
+    colsample_bytree: 0.8
+    eval_metric: "logloss"
+    n_jobs: -1
+    
+  mlp:
+    hidden_dims: [128, 64]
+    dropout: 0.2
+    learning_rate: 0.001
+    weight_decay: 1e-4
+    batch_size: 256
+    epochs: 40
+    early_stopping_patience: 7
+
+threshold_selection:
+  metric: "f1"  # Target metric on validation set: illicit F1-score
+  min_threshold: 0.01
+  max_threshold: 0.99
+  num_steps: 99

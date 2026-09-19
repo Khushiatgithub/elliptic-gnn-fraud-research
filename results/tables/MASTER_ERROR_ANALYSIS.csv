@@ -1,0 +1,26 @@
+Analysis_Domain,Category_or_Timestep,Sample_Count,Proportion_or_Rate,Mean_In_Degree,Mean_Out_Degree,Precision,Recall,Illicit_F1,Key_Observation
+Graph Homophily & Relational Topology,Total Directed Edges (|E|),"234,355",N/A,N/A,N/A,N/A,N/A,N/A,"High homophily among labeled pairs, but ~84.4% of edges touch unknown nodes"
+Graph Homophily & Relational Topology,Edges with Both Endpoints Labeled,"36,624 (15.63%)",N/A,N/A,N/A,N/A,N/A,N/A,"High homophily among labeled pairs, but ~84.4% of edges touch unknown nodes"
+Graph Homophily & Relational Topology,Edges Incident to Unknown Nodes,"197,731 (84.37%)",N/A,N/A,N/A,N/A,N/A,N/A,"High homophily among labeled pairs, but ~84.4% of edges touch unknown nodes"
+Graph Homophily & Relational Topology,Overall Labeled Edge Homophily,95.37%,N/A,N/A,N/A,N/A,N/A,N/A,"High homophily among labeled pairs, but ~84.4% of edges touch unknown nodes"
+Graph Homophily & Relational Topology,Licit → Licit Edges,"33,930 (92.64%)",N/A,N/A,N/A,N/A,N/A,N/A,"High homophily among labeled pairs, but ~84.4% of edges touch unknown nodes"
+Graph Homophily & Relational Topology,Illicit → Illicit Edges,998 (2.72%),N/A,N/A,N/A,N/A,N/A,N/A,"High homophily among labeled pairs, but ~84.4% of edges touch unknown nodes"
+Graph Homophily & Relational Topology,Licit → Illicit (Cross-Class),781 (2.13%),N/A,N/A,N/A,N/A,N/A,N/A,"High homophily among labeled pairs, but ~84.4% of edges touch unknown nodes"
+Graph Homophily & Relational Topology,Illicit → Licit (Cross-Class),915 (2.50%),N/A,N/A,N/A,N/A,N/A,N/A,"High homophily among labeled pairs, but ~84.4% of edges touch unknown nodes"
+Classification Error Taxonomy,Total Test Nodes,11184,100.00%,2.06,1.26,N/A,N/A,N/A,Errors have lower in-degree/out-degree than true negatives
+Classification Error Taxonomy,True Positives (TP),402,3.59%,0.87,0.7,N/A,N/A,N/A,Errors have lower in-degree/out-degree than true negatives
+Classification Error Taxonomy,True Negatives (TN),8165,73.01%,2.38,1.34,N/A,N/A,N/A,Errors have lower in-degree/out-degree than true negatives
+Classification Error Taxonomy,False Positives (FP),2383,21.31%,1.23,1.13,N/A,N/A,N/A,Errors have lower in-degree/out-degree than true negatives
+Classification Error Taxonomy,False Negatives (FN),234,2.09%,1.61,0.87,N/A,N/A,N/A,Errors have lower in-degree/out-degree than true negatives
+Classification Error Taxonomy,High-Confidence False Positives (p >= 0.80),0,0.00%,0.0,0.0,N/A,N/A,N/A,Errors have lower in-degree/out-degree than true negatives
+Classification Error Taxonomy,High-Confidence False Negatives (p <= 0.20),0,0.00%,0.0,0.0,N/A,N/A,N/A,Errors have lower in-degree/out-degree than true negatives
+Temporal Regime Shift by Timestep,Timestep 40,1211.0,112 illicit (9.25%),N/A,N/A,0.2090,0.6250,0.3132,Pre-regime shift / post-shift recovery period
+Temporal Regime Shift by Timestep,Timestep 41,1132.0,116 illicit (10.25%),N/A,N/A,0.2531,0.6983,0.3716,Pre-regime shift / post-shift recovery period
+Temporal Regime Shift by Timestep,Timestep 42,2154.0,239 illicit (11.10%),N/A,N/A,0.3800,0.8410,0.5234,Pre-regime shift / post-shift recovery period
+Temporal Regime Shift by Timestep,Timestep 43,1370.0,24 illicit (1.75%),N/A,N/A,0.0409,0.2917,0.0718,Darknet market shutdown disruption; severe illicit rate drop and sudden precision collapse
+Temporal Regime Shift by Timestep,Timestep 44,1591.0,24 illicit (1.51%),N/A,N/A,0.0181,0.5417,0.0350,Darknet market shutdown disruption; severe illicit rate drop and sudden precision collapse
+Temporal Regime Shift by Timestep,Timestep 45,1221.0,5 illicit (0.41%),N/A,N/A,0.0036,0.2000,0.0070,Darknet market shutdown disruption; severe illicit rate drop and sudden precision collapse
+Temporal Regime Shift by Timestep,Timestep 46,712.0,2 illicit (0.28%),N/A,N/A,0.0087,0.5000,0.0171,Pre-regime shift / post-shift recovery period
+Temporal Regime Shift by Timestep,Timestep 47,846.0,22 illicit (2.60%),N/A,N/A,0.0481,0.4091,0.0861,Pre-regime shift / post-shift recovery period
+Temporal Regime Shift by Timestep,Timestep 48,471.0,36 illicit (7.64%),N/A,N/A,0.1600,0.2222,0.1860,Pre-regime shift / post-shift recovery period
+Temporal Regime Shift by Timestep,Timestep 49,476.0,56 illicit (11.76%),N/A,N/A,0.1410,0.1964,0.1642,Pre-regime shift / post-shift recovery period

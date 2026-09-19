@@ -1,0 +1,43 @@
+# Configuration for Elliptic GNN Fraud Research Project
+
+project:
+  name: "elliptic-gnn-fraud-research"
+  title: "Graph Neural Network-Based Fraud Detection in Financial Transaction Networks"
+  version: "1.0.0"
+  random_seed: 42
+
+paths:
+  raw_dir: "data/raw/elliptic_bitcoin_dataset"
+  processed_dir: "data/processed"
+  results_tables_dir: "results/tables"
+  results_figures_dir: "results/figures"
+  results_logs_dir: "results/logs"
+  classes_file: "data/raw/elliptic_bitcoin_dataset/elliptic_txs_classes.csv"
+  edgelist_file: "data/raw/elliptic_bitcoin_dataset/elliptic_txs_edgelist.csv"
+  features_file: "data/raw/elliptic_bitcoin_dataset/elliptic_txs_features.csv"
+
+dataset:
+  num_timesteps: 49
+  total_features: 165
+  num_local_features: 93
+  num_agg_features: 72
+  class_mapping:
+    "1": "illicit"
+    "2": "licit"
+    "unknown": "unknown"
+  binary_label_mapping:
+    "1": 1  # Fraud / Illicit
+    "2": 0  # Non-fraud / Licit
+
+feature_analysis:
+  variance_threshold: 1e-5
+  correlation_threshold: 0.95
+  outlier_iqr_multiplier: 1.5
+
+visualization:
+  dpi: 300
+  style: "seaborn-v0_8-whitegrid"
+  palette:
+    licit: "#2b5c8f"
+    illicit: "#d95f02"
+    unknown: "#999999"

@@ -1,0 +1,16 @@
+Metric Category,Check,Result,Status
+Dimensions,Classes table shape,203769 rows x 2 cols,PASS
+Dimensions,Edgelist table shape,234355 rows x 2 cols,PASS
+Dimensions,Features table shape,203769 rows x 167 cols,PASS
+Integrity,Missing / NaN values (Classes),0,PASS
+Integrity,Missing / NaN values (Edges),0,PASS
+Integrity,Missing / NaN values (Features),0,PASS
+Integrity,Infinite values (Features),0,PASS
+Uniqueness,Duplicate txId in Classes,0,PASS
+Uniqueness,Duplicate txId in Features,0,PASS
+Uniqueness,Duplicate directed edges,0,PASS
+Graph Integrity,Self-loops (txId1 == txId2),0,PASS
+Graph Integrity,Isolated nodes (no edges),0 (0.00%),INFO
+Referential,Edges node IDs not in Features,0,PASS
+Referential,Classes node IDs == Features node IDs,True,PASS
+Labels,Unexpected label values,False,PASS

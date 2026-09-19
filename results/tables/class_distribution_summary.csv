@@ -1,0 +1,6 @@
+Category,Count,Proportion (%),Role in Benchmark
+Total Transactions,203769,100.0,All network nodes
+Unknown (Unlabeled),157205,77.14863399241297,Contextual graph nodes (unsupervised/GNN message passing)
+Total Labeled,46564,22.851366007587025,Supervised training/evaluation set
+Licit Transactions (Class 2),42019,20.62089915541618,Majority negative class (90.24% of labeled)
+Illicit Transactions (Class 1),4545,2.2304668521708404,Minority positive class (9.76% of labeled)

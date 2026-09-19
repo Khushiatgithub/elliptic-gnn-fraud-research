@@ -1,0 +1,10 @@
+Metric,Value,Description
+Total Network Edges,"234,355",All directed edges in dataset
+Edges Involving >= 1 Unknown Node,"197,731 (84.37%)",Edges connecting with unlabeled context
+Edges Involving >= 1 Illicit Node,"8,145 (3.48%)",Fraud exposure across network
+Both-Endpoint Labeled Edges,"36,624",Edges between two labeled nodes
+Labeled Edge Homophily Ratio,0.9537,Proportion of same-class connections (Licit-Licit + Illicit-Illicit)
+Licit -> Licit Edges,"33,930",Clean fund lineage
+Illicit -> Illicit Edges,998,Direct fraud chains/peeling chains
+Licit -> Illicit Edges,781,Clean funds entering illicit entities
+Illicit -> Licit Edges,915,Laundered funds exiting to licit entities

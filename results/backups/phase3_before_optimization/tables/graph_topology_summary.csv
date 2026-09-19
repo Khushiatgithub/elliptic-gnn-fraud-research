@@ -1,0 +1,14 @@
+Metric,Value,Research Significance
+Graph Formulation,Directed (Bitcoin Fund Flow) & Undirected (Message Passing),Directed edges model Bitcoin input-output lineage
+Total Node Count (|V|),"203,769",Full transaction set across 49 timesteps
+Total Directed Edge Count (|E|),"234,355",Observed flow of Bitcoin payments between transactions
+Isolated Nodes (Degree = 0),0 (0.00%),Nodes without 1-hop edges in the temporal slice
+In-Degree (Mean ± Std),1.150 ± 3.911,Number of input transactions funding a transaction
+In-Degree Max,284,Super-hub incoming transaction
+Out-Degree (Mean ± Std),1.150 ± 1.895,Number of output transactions spawned
+Out-Degree Max,472,Super-hub outgoing transaction
+Total Degree (Mean ± Std),2.300 ± 4.328,Overall neighborhood density
+Weakly Connected Components (WCC),49,Partitioned clusters across graph
+Largest WCC Node Fraction,3.87%,Size of primary giant component
+Strongly Connected Components (SCC),"203,769",Circularity of transaction chains
+Is Directed Acyclic Graph (DAG)?,True,Absence of cycles reflects temporal causality of Bitcoin UTXO

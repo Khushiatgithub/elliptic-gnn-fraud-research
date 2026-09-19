@@ -1,0 +1,9 @@
+Metric,Value
+Total Directed Edges (|E|),"234,355"
+Edges with Both Endpoints Labeled,"36,624 (15.63%)"
+Edges Incident to Unknown Nodes,"197,731 (84.37%)"
+Overall Labeled Edge Homophily,95.37%
+Licit → Licit Edges,"33,930 (92.64%)"
+Illicit → Illicit Edges,998 (2.72%)
+Licit → Illicit (Cross-Class),781 (2.13%)
+Illicit → Licit (Cross-Class),915 (2.50%)

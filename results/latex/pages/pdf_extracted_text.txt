@@ -1,0 +1,1450 @@
+--- PAGE 1 ---
+Graph Neural Networks versus Tabular Machine
+Learning for Illicit Transaction Detection in Bitcoin:
+An Empirical Evaluation under Chronological
+Partitioning
+Khushi
+Department of Artificial Intelligence and Data Science
+Indira Gandhi Delhi Technical University for Women
+Delhi, India
+khushi086btcseai23@igdtuw.ac.in
+Abstract—The detection of illicit transactions in public cryp-
+tocurrency ledgers is a critical challenge in financial forensic
+technology and regulatory compliance. Graph Neural Networks
+(GNNs) have emerged as an intuitive paradigm for blockchain
+analysis, operating on the premise that topological message
+passing over transaction networks will outperform conventional
+machine learning models. However, past empirical benchmarks
+frequently employ random cross-validation or feature-rich base-
+lines that obscure the isolated inductive benefit of graph
+structure. In this work, we present a rigorous, reproducible
+empirical comparison between three foundational Graph Neural
+Network architectures (GCN, GraphSAGE, GAT) and four
+strong conventional machine learning baselines (Logistic Re-
+gression, Random Forest, XGBoost, MLP) using the Elliptic
+Bitcoin benchmark under a strict chronological evaluation
+protocol (T = 49 time steps). Our experimental design controls
+for feature representations (93 local features vs. 165 full
+features), class-imbalance loss formulations (standard vs. cost-
+sensitive weighted cross-entropy), and multi-seed parameter
+initialization (N
+= 5 random seeds). Across the full 165-
+dimensional feature space, conventional tree-based ensembles
+demonstrate strong performance, with Random Forest achiev-
+ing a holdout test illicit F1-score of 0.7247 ± 0.0027 (PR-
+AUC 0.6599 ± 0.0025) and XGBoost achieving 0.7131 ± 0.0111
+(PR-AUC 0.6744 ± 0.0028), compared to 0.3308 ± 0.0602 for
+GAT, 0.2822 ± 0.1248 for GraphSAGE, and 0.2589 ± 0.0639
+for GCN. We observe that tabular models benefit consistently
+from pre-engineered 1-hop aggregate features (∆F1 = +0.0311
+to +0.0430), whereas GNN sensitivity to feature representa-
+tion is architecture-dependent. Furthermore, extensive ablation
+studies reveal that GNN performance is highly sensitive to
+graph directionality, unknown-node topological context, and
+random initialization seed variance (GCN F1 range 0.4686;
+GraphSAGE F1 range 0.3669). Statistical comparisons between
+the validation-selected GNN (GraphSAGE on local features,
+test F1 0.4153 ± 0.1914) and tree baselines yield raw paired t-
+test differences (p ≈0.023) that do not remain statistically sig-
+nificant following Holm-Bonferroni correction (pHolm = 0.0917)
+or exact Wilcoxon signed-rank testing (p = 0.0625), bounded
+by small sample power limits (N = 5). All models exhibit
+substantial temporal generalization degradation (relative F1
+drops of 23.6% to 44.9%) across chronological splits, driven by
+marked non-stationarity in illicit transaction prevalence. Our
+findings demonstrate that spatial graph convolution does not
+automatically outperform well-tuned tabular tree ensembles on
+financial transaction data, establishing baseline recommenda-
+tions for empirical blockchain forensics.
+Index Terms—Bitcoin, illicit transaction detection, fraud
+detection, graph neural networks, GraphSAGE, GCN, GAT,
+tabular machine learning, temporal generalization, class imbal-
+ance.
+I. Introduction
+A. Background and Context
+Decentralized blockchain protocols, most prominently
+Bitcoin, have introduced trustless, pseudonymous financial
+transaction networks [1], [2]. While providing unprece-
+dented financial autonomy and cryptographic settlement
+guarantees, public ledgers have also been exploited by
+illicit actors for ransomware extortion, money laundering,
+darknet contraband traﬀicking, and sanctions evasion [1],
+[3].
+In response, regulatory bodies and cryptocurrency ana-
+lytics firms have invested heavily in automated blockchain
+forensic systems to identify anomalous and illicit transac-
+tional behavior [4], [5]. Forensic analysis is made possible
+by the public availability of the Bitcoin transaction graph,
+where addresses and transactions form a directed, times-
+tamped acyclic graph of value transfers [2], [6].
+B. Problem Definition and Class Imbalance
+The automated identification of fraudulent entities in
+cryptocurrency transaction graphs represents a specialized
+supervised node classification problem under severe label
+skew and temporal non-stationarity. In practice, confirmed
+illicit transactions constitute a minute fraction of total
+transaction volume (< 2%), while legitimate commercial
+transfers, exchange arbitrage, and mining payouts domi-
+nate the network [3], [7]. Furthermore, in public bench-
+marks such as the Elliptic Bitcoin dataset [8], over 77%
+of transactions lack deanonymized ground-truth labels.
+Forensic classification systems must therefore generalize
+under three compounding constraints:
+
+--- PAGE 2 ---
+1) Extreme Class Imbalance: A high ratio of licit to
+illicit entities (≈9.25 : 1 among labeled nodes, and
+> 40 : 1 globally) [7].
+2) High Structural Sparsity and Unlabeled Context: A
+massive majority (77.15%) of graph nodes remain
+unannotated, forcing algorithms to propagate struc-
+tural information across unlabeled paths [8].
+3) Temporal Non-Stationarity and Adversarial Concept
+Drift: Laundering typologies, coin-mixing strategies,
+and illicit operations evolve dynamically over time,
+leading to severe distribution shift across chronolog-
+ical epochs [9], [10].
+C. Motivation for Graph Representation Learning
+Because Bitcoin transactions are natively intercon-
+nected through directed payment edges, Graph Neural
+Networks (GNNs) [11], [12] have emerged as a natural
+methodological paradigm for blockchain forensics. Unlike
+conventional tabular machine learning architectures that
+evaluate transactions as isolated feature vectors, GNNs
+leverage spatial message passing to recursively aggregate
+representations from multi-hop topological neighborhoods
+[13]–[15].
+In theory, neighborhood aggregation allows GNNs to
+exploit relational patterns that are inaccessible to tabular
+models, such as fan-out mixing patterns, pass-through
+intermediary nodes, and multi-hop fund consolidation [8].
+D. Research Gap and Primary Contributions
+Despite theoretical motivation, prior studies comparing
+GNNs and tabular baselines on blockchain data have often
+exhibited methodological limitations:
+1) Confounded Feature Spaces: Tabular models are
+frequently compared using raw metadata, while
+GNNs are provided with pre-aggregated topological
+features, conflating graph convolution with feature
+engineering [16], [17].
+2) Random Split Contamination: Standard randomized
+train/test splits allow information from future time
+steps to leak into training partitions, violating real-
+world causality [18], [19].
+3) Inadequate Ablation of Graph Construction: The
+isolated contributions of edge directionality, unla-
+beled node inclusion, and layer depth are rarely dis-
+sected systematically under identical optimization
+constraints.
+To address these gaps, this paper presents a controlled
+empirical evaluation of Graph Neural Networks and tab-
+ular machine learning under strict chronological parti-
+tioning on the Elliptic Bitcoin benchmark. Our primary
+contributions are:
+• Strict Chronological Benchmarking: We evaluate four
+tabular baselines (Logistic Regression, Random For-
+est, XGBoost, MLP) and three GNN architectures
+(GCN, GraphSAGE, GAT) across 49 discrete time
+steps under a prospective train/validation/test split.
+• Isolated Feature Representation Analysis: We inde-
+pendently evaluate performance on intrinsic local
+metadata (93 features) versus the full feature space
+(165 features) containing 1-hop topological aggre-
+gates.
+• Systematic Topological Ablations: We quantify the
+impact of unlabeled graph context, edge directionality
+(forward, backward, bidirectional), message-passing
+depth (1–3 layers), and cost-sensitive loss weighting.
+• Multi-Seed Statistical and Error Characterization:
+We report performance distributions across N = 5
+seeds, conduct paired hypothesis tests with Holm-
+Bonferroni correction, and provide degree-resolved
+error taxonomies.
+E. Paper Organization
+The remainder of this manuscript is organized as follows:
+Section II formalizes the dataset, feature representation,
+and chronological evaluation protocol. Section III details
+the baseline and GNN architectures, loss formulations,
+and statistical methodology. Section IV presents the main
+benchmark results. Section V details topological and
+architectural ablation studies. Section VI provides formal
+statistical significance and power analyses. Section VII
+presents error taxonomies and graph-structural character-
+ization. Section VIII discusses scientific and practical im-
+plications. Section IX outlines methodological limitations,
+and Section X concludes with directions for future work.
+II. Dataset and Problem Formulation
+A. The Elliptic Bitcoin Benchmark
+We conduct our empirical investigation on the Elliptic
+Bitcoin transaction dataset [8], comprising |V | = 203, 769
+transaction nodes and |E| = 234, 355 directed payment
+edges partitioned across T = 49 discrete, chronologically
+ordered time steps. Each time step represents an ap-
+proximately two-week window of blockchain activity. All
+directed edges exist strictly between transactions within
+the same time step (tu = tv for all (u, v) ∈E); there are
+zero cross-timestep edges [8].
+B. Entity Classes and Label Imbalance
+Transactions are classified into three mutually exclusive
+categories:
+• Class 1 (Illicit): Verified malicious entities, includ-
+ing darknet marketplaces, ransomware extortionists,
+scams, and mixing services (N = 4, 545, 2.23% total,
+9.76% labeled).
+• Class 2 (Licit): Verified legitimate entities, including
+exchanges, wallet services, miners, and legal mer-
+chants (N = 42, 019, 20.62% total, 90.24% labeled).
+• Class ”unknown” (Unlabeled): Transactions lacking
+ground-truth attribution (N = 157, 205, 77.15% to-
+tal).
+The ratio of licit to illicit transactions among labeled nodes
+is approximately 9.245 : 1 (see Fig. 1).
+
+--- PAGE 3 ---
+Fig. 1. Distribution of Licit, Illicit, and Unknown transactions across
+the 49 discrete timesteps in the Elliptic benchmark dataset.
+C. Evaluation Metrics under Class Skew
+Given severe class imbalance, overall accuracy is unin-
+formative [20], [21]. We evaluate minority-class detection
+using:
+Precision (P) =
+TP
+TP + FP
+(1)
+Recall (R) =
+TP
+TP + FN
+(2)
+F1-Score = 2 · P · R
+P + R
+(3)
+MCC =
+TP · TN −FP · FN
+√
+(TP + FP)(TP + FN)(TN + FP)(TN + FN)
+(4)
+Our primary target metric is the Illicit-Class F1-Score
+on the blind test holdout (t ∈[40, 49]), supported by
+Precision-Recall Area Under the Curve (PR-AUC).
+D. Feature Space Representation
+Each
+transaction
+node
+v
+∈
+V
+possesses
+a
+165-
+dimensional feature vector xv ∈R165 consisting of:
+1) Local Features (1–93, dlocal = 93): Intrinsic meta-
+data, including transaction fees, transacted volumes,
+input/output counts, and script properties.
+2) Aggregated Features (94–165, dagg = 72): Hand-
+crafted 1-hop summary statistics (minimum, maxi-
+mum, mean, standard deviation) computed across
+immediate predecessor and successor transactions
+[8].
+E. Chronological Partitioning Protocol
+To evaluate prospective temporal generalization, we
+enforce a strict chronological split (see Fig. 2 and Table
+I):
+• Training Set (t ∈[1, 34]): 29, 894 labeled nodes (3, 462
+illicit, 26, 432 licit; 11.58% illicit prevalence).
+• Validation Set (t ∈[35, 39]): 5, 486 labeled nodes (447
+illicit, 5, 039 licit; 8.15% illicit prevalence).
+• Test Set (t ∈[40, 49]): 11, 184 labeled nodes (636
+illicit, 10, 548 licit; 5.69% illicit prevalence).
+Fig. 2. Total transaction volume and temporal class composition over
+the 49 discrete timesteps, showing chronological training, validation,
+and test partitions.
+III. Methodology
+A. Baseline Model Architectures
+We benchmark against four conventional machine learn-
+ing baselines:
+• Logistic Regression (LR): Linear classification opti-
+mized via L-BFGS with L2 regularization (C = 1.0).
+• Random Forest (RF): Bagged ensemble of 100 de-
+cision trees (n_estimators=100, max_depth=None,
+min_samples_split=2) [22].
+• XGBoost:
+Gradient-boosted
+decision
+trees
+(n_estimators=100,
+max_depth=6,
+learning_rate=0.1,
+subsample=0.8,
+colsam-
+ple_bytree=0.8) [23].
+• Multi-Layer Perceptron (MLP): Deep neural network
+with 2 hidden layers (128 units each), ReLU acti-
+vations, Dropout (p = 0.3), Batch Normalization,
+trained via Adam (lr = 0.001, weight decay 10−5).
+B. Graph Neural Network Architectures
+We evaluate three foundational Graph Neural Network
+architectures:
+• Graph Convolutional Networks (GCN) [13]:
+H(l+1) = σ
+(
+˜D−1
+2 ˜A ˜D−1
+2 H(l)W (l))
+(5)
+• GraphSAGE [14]:
+h(l+1)
+v
+= σ
+
+W (l) ·
+
+h(l)
+v ∥
+1
+|N(v)|
+∑
+u∈N (v)
+h(l)
+u
+
+
+
+(6)
+• Graph Attention Networks (GAT) [15]:
+αvu =
+exp
+(
+LeakyReLU
+(
+aT [Whv ∥Whu]
+))
+∑
+k∈N (v) exp (LeakyReLU (aT [Whv ∥Whk]))
+(7)
+All GNN models employ 2 message-passing layers, 128
+hidden channels, Dropout (p = 0.3), and Adam optimizer
+(lr = 0.001). GAT utilizes 4 attention heads (32 channels
+per head). Hyperparameter details are provided in Table
+II.
+
+--- PAGE 4 ---
+TABLE I
+Elliptic Dataset Structure and Temporal Split Summary
+Metric / Attribute
+Training Partition
+Validation Partition
+Test Partition
+Full Dataset
+Timestep Range (t)
+Timesteps 1–34
+Timesteps 35–39
+Timesteps 40–49
+Timesteps 1–49
+Discrete Time Steps
+34 snapshots
+5 snapshots
+10 snapshots
+49 snapshots
+Labeled Transactions
+29,894 (64.18%)
+5,486 (11.78%)
+11,184 (24.04%)
+46,564 (100.0%)
+Licit Transactions
+26,432 (88.42%)
+5,039 (91.85%)
+10,548 (94.31%)
+42,019 (90.24%)
+Illicit Transactions
+3,462 (11.58%)
+447 (8.15%)
+636 (5.69%)
+4,545 (9.76%)
+Imbalance Ratio (Licit : Illicit)
+7.63 : 1
+11.27 : 1
+16.58 : 1
+9.245 : 1
+Total Graph Nodes (incl. Unknown)
+136,005
+23,790
+43,974
+203,769
+Total Graph Edges
+156,589
+27,243
+50,523
+234,355
+TABLE II
+Model Architecture and Hyperparameter Specification
+Model
+Family
+Key Hyperparameters
+Logistic Reg.
+Linear
+C = 1.0, L2 penalty, L-
+BFGS solver
+Random Forest
+Bagged Trees
+100 trees, unlimited depth,
+Gini split
+XGBoost
+Boosting
+100 trees, depth 6, lr 0.1,
+sub 0.8
+MLP
+Neural Net
+2
+layers,
+128
+units,
+Dropout 0.3, Adam
+GCN
+Graph Conv
+2 layers, 128 hidden, Adam
+(10−3)
+GraphSAGE
+Inductive GNN
+2 layers, 128 hidden, Mean
+aggregate
+GAT
+Attention GNN
+2
+layers,
+128
+hidden,
+4
+heads (32/head)
+C. Loss Formulations and Cost-Sensitive Weighting
+We evaluate unweighted cross-entropy alongside cost-
+sensitive class weighting (wpos = 26, 432/3, 462 ≈7.6349).
+Unknown-label nodes are retained in the graph for mes-
+sage passing but strictly masked out from supervised loss
+computation:
+Lmasked = −
+1
+|Vlabeled
+train
+|
+∑
+v∈Vlabeled
+train
+[wposyv log ˆyv + (1 −yv) log(1 −ˆyv)]
+(8)
+D. Training and Threshold Locking Protocol
+Models are trained for 100 epochs on Timesteps 1–34
+with Early Stopping (patience = 15) monitoring valida-
+tion illicit F1 on Timesteps 35–39. Decision thresholds
+are tuned strictly on the validation partition (τ ∗
+=
+arg max F1val) and locked prior to blind evaluation on
+Timesteps 40–49.
+E. Statistical Significance Testing Protocol
+All non-deterministic architectures are evaluated across
+N = 5 random seeds (S = {42, 123, 456, 789, 999}). Sta-
+tistical comparisons between the validation-selected GNN
+and baselines employ two-sided paired t-tests with Holm-
+Bonferroni correction [24] and exact paired Wilcoxon
+signed-rank tests [25], [26].
+IV. Results
+A. Main Comparison on Full Features
+Quantitative results on the full 165-feature represen-
+tation across five seeds are reported in Table III and
+illustrated in Fig. 3:
+• Random Forest (Standard): Achieved test illicit F1 of
+0.7247 ± 0.0027 and PR-AUC of 0.6599 ± 0.0025.
+• XGBoost (Standard): Achieved test illicit F1 of
+0.7131 ± 0.0111 and PR-AUC of 0.6744 ± 0.0028.
+• MLP (Standard): Achieved test illicit F1 of 0.5848 ±
+0.0194 and PR-AUC of 0.5115 ± 0.0187.
+• Logistic Regression (Standard): Produced determinis-
+tic test illicit F1 of 0.4015 and PR-AUC of 0.2754.
+• GAT (Weighted): Produced the highest full-feature
+GNN performance (F1 0.3308 ± 0.0602, PR-AUC
+0.2667 ± 0.0695).
+• GraphSAGE (Weighted): Produced F1 of 0.2822 ±
+0.1248 and PR-AUC of 0.2366 ± 0.1386.
+• GCN (Weighted): Produced F1 of 0.2589±0.0639 and
+PR-AUC of 0.2202 ± 0.0703.
+Fig. 3. Main benchmark comparison of test illicit F1-score and PR-
+AUC between conventional tabular machine learning baselines and
+Graph Neural Network architectures on the 165-feature representa-
+tion.
+B. F1 and PR-AUC Dynamics
+For XGBoost, continuous ranking quality was superior
+(PR-AUC 0.6744) despite Random Forest obtaining a
+marginally higher discrete F1 (0.7247 vs. 0.7131). Across
+GNNs, test F1 and PR-AUC tracked closely together
+(0.3308 vs. 0.2667 for GAT; 0.2822 vs. 0.2366 for Graph-
+SAGE; 0.2589 vs. 0.2202 for GCN).
+
+--- PAGE 5 ---
+TABLE III
+Main Benchmark Results on Full Features (165 Dimensions)
+Model Architecture
+Model Family
+Feat.
+Loss Form
+Validation F1
+Test Illicit F1
+Test PR-AUC
+Test Prec. / Rec.
+Random Forest
+Tree Ensemble
+165
+Standard
+0.9489 ± 0.0023
+0.7247 ± 0.0027
+0.6599 ± 0.0025
+0.9586/0.5827
+XGBoost
+Gradient Boosting
+165
+Standard
+0.9399 ± 0.0053
+0.7131 ± 0.0111
+0.6744 ± 0.0028
+0.9127/0.5855
+MLP
+Neural Network
+165
+Standard
+0.8212 ± 0.0344
+0.5848 ± 0.0194
+0.5115 ± 0.0187
+0.7630/0.4761
+Logistic Regression
+Linear Model
+165
+Standard
+0.5921 ± 0.0000
+0.4015 ± 0.0000
+0.2754 ± 0.0000
+0.3821/0.4230
+GAT
+Graph Attention
+165
+Weighted
+0.6006 ± 0.0982
+0.3308 ± 0.0602
+0.2667 ± 0.0695
+0.2680/0.4412
+GraphSAGE
+Inductive GNN
+165
+Weighted
+0.4473 ± 0.1590
+0.2822 ± 0.1248
+0.2366 ± 0.1386
+0.2695/0.3588
+GCN
+Graph Conv Net
+165
+Weighted
+0.4293 ± 0.0923
+0.2589 ± 0.0639
+0.2202 ± 0.0703
+0.2788/0.2884
+C. Precision-Recall Trade-offs
+Precision-Recall dynamics (see Fig. 4) reveal that tree
+ensembles achieved exceptionally high precision (0.9586
+for RF; 0.9127 for XGBoost) at moderate recall (≈0.58),
+whereas GNN architectures produced lower precision
+(0.2680–0.2788) and moderate recall (0.2884–0.4412).
+Fig. 4.
+Precision-Recall curves for primary Graph Neural Network
+architectures evaluated on the blind test holdout partition across
+timesteps 40–49.
+D. Local versus Full Feature Representations
+Table IV and Fig. 5 compare models trained on Local
+93 features versus Full 165 features:
+• Tree
+ensembles
+and
+MLP
+benefited
+consistently
+from 1-hop aggregate features (RF: +0.0311; XGB:
++0.0430; MLP: +0.0187).
+• GAT test F1 improved by +0.0942 (0.2367 →0.3308).
+• In contrast, GraphSAGE achieved its highest perfor-
+mance on 93 Local features (0.4153 ± 0.1914), declin-
+ing by −0.1331 on Full features (0.2822 ± 0.1248).
+• GCN was largely invariant (∆F1 = +0.0030).
+E. Standard versus Cost-Sensitive Loss Weighting
+As shown in Table V, positive-class loss weighting
+(wpos ≈7.63) shifted precision-recall operating points
+rather than providing universal F1 gains, as validation
+TABLE IV
+Feature Representation Comparison (Local 93 vs. Full 165)
+Model
+Local 93 F1
+Full 165 F1
+∆F1
+∆PR-AUC
+Random Forest
+0.6936 ± 0.0022
+0.7247 ± 0.0027
++0.0311
++0.0267
+XGBoost
+0.6701 ± 0.0069
+0.7131 ± 0.0111
++0.0430
++0.0355
+MLP
+0.5661 ± 0.0232
+0.5848 ± 0.0194
++0.0187
++0.0227
+Logistic Reg.
+0.4378 ± 0.0000
+0.4015 ± 0.0000
+−0.0363
+−0.0252
+GAT
+0.2367 ± 0.0825
+0.3308 ± 0.0602
++0.0942
++0.1014
+GraphSAGE
+0.4153 ± 0.1914
+0.2822 ± 0.1248
+−0.1331
+−0.1293
+GCN
+0.2559 ± 0.0768
+0.2589 ± 0.0639
++0.0030
++0.0064
+Fig. 5. Feature representation impact comparing Local 93 metadata
+features against Full 165 features across conventional ML and GNN
+models.
+threshold tuning had already recalibrated unweighted
+models.
+TABLE V
+Class Loss Weighting Comparison (Full 165 Features)
+Model Architecture
+Standard F1
+Weighted F1
+∆F1
+MCC (Std)
+Random Forest
+0.7247 ± 0.0027
+0.7024 ± 0.0051
+−0.0223
+0.7367 ± 0.0057
+XGBoost
+0.7131 ± 0.0111
+0.7197 ± 0.0074
++0.0066
+0.7189 ± 0.0154
+MLP
+0.5848 ± 0.0194
+0.5513 ± 0.0362
+−0.0334
+0.5840 ± 0.0155
+Logistic Reg.
+0.4015 ± 0.0000
+0.3480 ± 0.0000
+−0.0535
+0.3640 ± 0.0000
+F. Validation-to-Test Generalization Decay
+All
+architectures
+suffered
+marked
+performance
+de-
+clines from validation (Timesteps 35–39) to blind test
+(Timesteps 40–49):
+∆rel = Val F1 −Test F1
+Val F1
+× 100
+(9)
+Relative drops: RF: −23.6%; XGBoost: −24.1%; MLP:
+−28.8%; GraphSAGE (Local): −31.5%; GCN: −39.7%;
+GAT: −44.9%.
+
+--- PAGE 6 ---
+G. Random-Seed Stability and Initialization Variance
+Table VI and Fig. 9 demonstrate that tree ensembles
+exhibited tight cross-seed clustering (σ ≤0.0111), while
+GNNs displayed wide dispersion across seeds (Graph-
+SAGE Local range ∆= 0.3669, GCN Full range ∆=
+0.4686).
+TABLE VI
+Multi-Seed Stability and Parameter Initialization Sensitivity
+Model Configuration
+Min F1
+Max F1
+Range (∆)
+Mean ± Std F1
+Random Forest (165)
+0.7209
+0.7271
+0.0062
+0.7247 ± 0.0027
+XGBoost (165)
+0.6984
+0.7223
+0.0239
+0.7131 ± 0.0111
+MLP (165)
+0.5520
+0.5989
+0.0469
+0.5848 ± 0.0194
+Logistic Reg. (165)
+0.4015
+0.4015
+0.0000
+0.4015 ± 0.0000
+GAT (165)
+0.2241
+0.3638
+0.1397
+0.3308 ± 0.0602
+GraphSAGE (165)
+0.1477
+0.4746
+0.3269
+0.2822 ± 0.1248
+GCN (165)
+0.1723
+0.6409
+0.4686
+0.2589 ± 0.0639
+GraphSAGE (Local 93)
+0.2583
+0.6252
+0.3669
+0.4153 ± 0.1914
+Fig. 6. Cross-seed test F1 score distributions and parameter initial-
+ization variance across five random seeds.
+V. Ablation and Sensitivity Analysis
+A. Impact of Unlabeled Graph Context
+Table VII and Fig. 6 present the ablation comparing
+the full 100% topology against an induced subgraph of
+labeled nodes only:
+• For GCN, removing unknown nodes increased test
+illicit F1 from 0.2589 to 0.4555 (∆= +0.1966).
+• For GraphSAGE, removing unknown nodes increased
+F1 from 0.2822 to 0.4132 (∆= +0.1310).
+• For GAT, retaining unknown nodes produced higher
+F1 (0.3308 vs. 0.2918).
+TABLE VII
+Unknown-Node Context Ablation (Timesteps 40–49, 165 Features)
+Architecture
+Retained F1
+Removed F1
+∆F1
+Trend
+GAT
+0.3308 ± 0.0602
+0.2918 ± 0.0521
+−0.0390
+Retained Higher
+GCN
+0.2589 ± 0.0639
+0.4555 ± 0.0524
++0.1966
+Removed Higher
+GraphSAGE
+0.2822 ± 0.1248
+0.4132 ± 0.0514
++0.1310
+Removed Higher
+Fig. 7.
+Unknown-node context ablation comparing test F1 perfor-
+mance when unlabeled transaction nodes are retained versus removed
+from the graph.
+B. Graph Propagation Directionality
+Table VIII and Fig. 7 examine Forward (u →v),
+Backward (v →u), and Bidirectional message passing.
+Backward propagation yielded higher retrospective test
+F1 (0.3213–0.3953) than forward flow (0.2589–0.3308),
+and bidirectional propagation reached 0.4618 for GAT.
+However, backward flow relies on future transactional
+context unavailable during live broadcast; forward flow
+remains the primary inductive standard.
+TABLE VIII
+Graph Directionality Ablation (Timesteps 40–49, 165 Features)
+Architecture
+Forward
+Backward
+Bidirectional
+∆(Bwd-Fwd)
+GAT
+0.3308 ± 0.0602
+0.3938 ± 0.0706
+0.4618 ± 0.0234
++0.0630
+GCN
+0.2589 ± 0.0639
+0.3953 ± 0.0462
+0.3142 ± 0.0571
++0.1364
+GraphSAGE
+0.2822 ± 0.1248
+0.3213 ± 0.0558
+0.3710 ± 0.1228
++0.0391
+Fig. 8. Graph directionality ablation comparing Forward, Backward,
+and Bidirectional message-passing propagation across GNN architec-
+tures.
+C. Message-Passing Layer Depth
+Table IX and Fig. 8 show depth responses across 1, 2,
+and 3 layers:
+• GCN degraded monotonically (0.2862 →0.2589 →
+0.2089), consistent with theoretical over-smoothing
+in isotropic convolutions [27]–[29].
+
+--- PAGE 7 ---
+• GAT peaked at 2 layers (0.3308 ± 0.0602).
+• GraphSAGE achieved its highest full-feature perfor-
+mance with a single layer (0.3750 ± 0.1215).
+TABLE IX
+GNN Depth Ablation (Timesteps 40–49, 165 Features)
+Architecture
+1 Layer
+2 Layers
+3 Layers
+Profile
+GAT
+0.2877 ± 0.0319
+0.3308 ± 0.0602
+0.2847 ± 0.0052
+Peak at 2
+GCN
+0.2862 ± 0.0250
+0.2589 ± 0.0639
+0.2089 ± 0.0892
+Monotonic
+GraphSAGE
+0.3750 ± 0.1215
+0.2822 ± 0.1248
+0.3327 ± 0.1250
+Peak at 1
+Fig. 9. Message-passing depth ablation across 1, 2, and 3 layers for
+GCN, GraphSAGE, and GAT.
+VI. Statistical Analysis
+A. Paired Hypothesis Testing
+To eliminate post-hoc selection bias, we evaluate the
+validation-selected GNN (GraphSAGE on Local 93 Fea-
+tures, Val F1 = 0.6060, Test F1 = 0.4153±0.1914, Test PR-
+AUC = 0.3659 ± 0.1859) against representative baselines
+across five shared seeds (N = 5). As reported in Table X:
+• Unadjusted paired t-tests indicated differences favor-
+ing Random Forest (praw = 0.0229, dz = −1.6062)
+and XGBoost (praw = 0.0247, dz = −1.5694) [30],
+[31].
+• Following Holm-Bonferroni correction [24], adjusted
+p-values increased to pHolm = 0.0917.
+• Exact paired Wilcoxon signed-rank tests produced
+pWilcoxon = 0.0625 [25], [26].
+• Consequently, differences do not cross the formal
+significance threshold of α = 0.05 after multiple
+comparison adjustment.
+B. Statistical Power Bounds at N = 5
+For sample size N = 5, there are 25 = 32 possible
+signed-rank permutations. The minimum achievable two-
+sided Wilcoxon p-value is mathematically bounded at:
+pmin = 2
+25 = 2
+32 = 0.0625
+(10)
+It is therefore mathematically impossible for a two-sided
+Wilcoxon test with N = 5 to achieve p < 0.05, regardless
+of effect magnitude [25], [26].
+VII. Error and Graph-Structural Analysis
+A. Error Taxonomy and Degree Disparity
+Table XI details error distributions and connectivity
+across the 11, 184 test nodes (402 TP, 8, 165 TN, 2, 383
+FP, 234 FN):
+• True Negatives had the highest connectivity (mean
+in-degree 2.38, out-degree 1.34).
+• True Positives had the lowest connectivity (mean in-
+degree 0.87, out-degree 0.70).
+• The test set contained zero high-confidence false
+positives (ˆp ≥0.80) and zero high-confidence false
+negatives (ˆp ≤0.20), indicating that misclassifications
+occurred in regions of model uncertainty.
+B. Graph Homophily and Relational Topology
+Of 234, 355 directed edges, only 36, 624 (15.63%) con-
+nect two labeled nodes. Among mutually labeled edges,
+same-class homophily is 95.37% (34, 928/36, 624):
+hlabeled = 34, 928
+36, 624 = 95.37%
+(11)
+Conversely, 197, 731 edges (84.37%) involve at least one
+unknown node (see Fig. 10).
+Fig. 10.
+Edge class transition matrix and relational homophily
+distribution among labeled and unlabeled transaction nodes.
+C. Temporal Error Patterns across Timesteps 40–49
+Analyzing individual test timesteps (see Fig. 11) reveals
+that during Timesteps 40–42, illicit prevalence was high
+(9.25%–11.10%, test F1 up to 0.5234). At Timestep 43,
+illicit transaction prevalence collapsed by 84% (11.10% →
+1.75%), driving test F1 down to 0.0718.
+VIII. Discussion
+A. Comparative Performance of GNNs versus Tabular
+Baselines
+Under the evaluated chronological protocol, tree-based
+ensembles (Random Forest F1 0.7247, XGBoost F1 0.7131)
+outperformed the evaluated GNN models (GAT 0.3308,
+GraphSAGE 0.2822, GCN 0.2589) on full features. This
+outcome is conditional on the benchmark setup and does
+not constitute universal proof of GNN inferiority [16], [18].
+
+--- PAGE 8 ---
+TABLE X
+Paired Statistical Significance Tests (GraphSAGE Local 93 vs. Baselines, N = 5 Seeds)
+Metric / Comparison
+Mean Diff (∆)
+Paired t
+p (Raw)
+p (Holm)
+W-Stat
+p (Wilcoxon)
+Cohen dz
+FWER Signif.
+Test Illicit F1
+vs. Random Forest
+−0.3094
+−3.5917
+0.0229
+0.0917
+0.0
+0.0625
+−1.6062
+No (p ≥0.05)
+vs. XGBoost
+−0.3044
+−3.5092
+0.0247
+0.0917
+0.0
+0.0625
+−1.5694
+No (p ≥0.05)
+vs. MLP
+−0.1695
+−1.8872
+0.1322
+0.2644
+3.0
+0.3125
+−0.8440
+No (p ≥0.05)
+vs. Logistic Regression
++0.0673
++0.7856
+0.4760
+0.4760
+6.0
+0.8125
++0.3513
+No (p ≥0.05)
+Test PR-AUC
+vs. Random Forest
+−0.2940
+−3.5141
+0.0246
+0.0816
+0.0
+0.0625
+−1.5716
+No (p ≥0.05)
+vs. XGBoost
+−0.3064
+−3.7246
+0.0204
+0.0816
+0.0
+0.0625
+−1.6657
+No (p ≥0.05)
+vs. MLP
+−0.1456
+−1.6440
+0.1755
+0.3070
+3.0
+0.3125
+−0.7352
+No (p ≥0.05)
+vs. Logistic Regression
++0.1462
++1.7584
+0.1535
+0.3070
+3.0
+0.3125
++0.7864
+No (p ≥0.05)
+TABLE XI
+Error and Graph-Structural Taxonomy (Test Set, N = 11, 184)
+Category / Segment
+Count
+Prop. (%)
+In-Deg.
+Out-Deg.
+Total Test Nodes
+11,184
+100.00%
+2.06
+1.26
+True Positives (TP)
+402
+3.59%
+0.87
+0.70
+True Negatives (TN)
+8,165
+73.01%
+2.38
+1.34
+False Positives (FP)
+2,383
+21.31%
+1.23
+1.13
+False Negatives (FN)
+234
+2.09%
+1.61
+0.87
+High-Confidence FP (ˆp ≥0.80)
+0
+0.00%
+0.00
+0.00
+High-Confidence FN (ˆp ≤0.20)
+0
+0.00%
+0.00
+0.00
+Fig. 11.
+Timestep-by-timestep test performance breakdown across
+timesteps
+40–49,
+illustrating
+performance
+collapse
+during
+the
+Timestep 43 regime shift.
+B. Critical Evaluation of Relational Inductive Bias
+The availability of relational transaction structure does
+not guarantee that spatial GNNs will outperform strong
+tabular models [11], [32]. When tabular classifiers receive
+1-hop pre-engineered aggregates, decision trees partition
+feature space orthogonally without propagating raw fea-
+ture noise across sparse neighborhoods [16], [22], [23].
+C. Feature Representation Dynamics
+Handcrafted 1-hop aggregates improved Random Forest
+(+0.0311 F1), XGBoost (+0.0430 F1), MLP (+0.0187
+F1), and GAT (+0.0942 F1), but degraded GraphSAGE
+(−0.1331 F1), indicating architecture-specific feature in-
+teractions.
+D. Class Imbalance and Threshold Tuning Dynamics
+Because models underwent validation threshold tuning
+(τ ∗= arg max F1val), unweighted models adjusted deci-
+sion thresholds effectively. Loss weighting (wpos = 7.63)
+shifted precision-recall operating trade-offs without offer-
+ing consistent F1 gains.
+E. Temporal Distribution Shift and Concept Drift
+All architectures experienced substantial validation-to-
+test drops (23.6% to 44.9%), reflecting temporal distribu-
+tion shift [9], [10].
+F. Seed Sensitivity and Optimization Landscape
+Tree models showed tight cross-seed clustering (σ ≤
+0.0111), while GNNs displayed substantial initialization
+dispersion (GraphSAGE Local range ∆= 0.3669, GCN
+Full range ∆= 0.4686).
+G. Structural Role of Unlabeled Transactions
+GCN and GraphSAGE achieved higher F1 on the
+isolated labeled subgraph (0.2589 →0.4555 and 0.2822 →
+0.4132), whereas GAT performed best when unknown
+nodes were retained (0.2918 →0.3308).
+H. Causal Directionality versus Retrospective Leakage
+Backward propagation yielded higher retrospective test
+F1 (0.3213–0.3953), but relies on future context un-
+available during live transaction broadcast; forward flow
+remains the proper inductive standard.
+I. Over-Smoothing and Layer Depth Dynamics
+GCN degraded monotonically with depth (0.2862 →
+0.2589
+→
+0.2089),
+consistent
+with
+potential
+over-
+smoothing across isotropic convolutions [27]–[29]. GAT
+peaked at 2 layers (0.3308), and GraphSAGE peaked at
+1 layer (0.3750).
+J. Statistical Power and Multiple Comparison Corrections
+While raw paired t-tests indicated differences favoring
+tree ensembles (praw ≈0.023), adjusted hypothesis tests
+did not cross α = 0.05 after Holm-Bonferroni correction
+(pHolm = 0.0917) or Wilcoxon signed-rank testing (p =
+0.0625) due to small sample power bounds (N = 5) [24]–
+[26].
+
+--- PAGE 9 ---
+K. Structural Profiles of Model Misclassifications
+True positives exhibited lower connectivity (mean de-
+gree < 1.0) than true negatives (mean degree > 2.0),
+indicating that isolated illicit nodes present unique forensic
+detection challenges.
+L. Darknet Market Dynamics and Timestep 43 Non-
+Stationarity
+The sharp drop in illicit transaction volume at Timestep
+43 underscores the vulnerability of static forensic models
+to sudden macroeconomic and law enforcement interven-
+tions [8], [19].
+M. Practical Implications for Industry and Regulators
+In production compliance environments, well-tuned gra-
+dient boosting ensembles with engineered topological ag-
+gregates offer strong detection capability, low inference
+latency, and high parameter stability.
+IX. Limitations
+A. Anonymized Feature Semantics
+Features in the Elliptic benchmark are fully anonymized,
+precluding domain-specific feature interpretation.
+B. High Proportion of Unlabeled Transactions
+77.15% of transactions lack labels, limiting full rela-
+tional ground truth.
+C. Temporal Non-Stationarity and Regime Shifts
+Adversarial adaptation and darknet market disruptions
+introduce substantial concept drift [9], [10].
+D. Statistical Power Constraints with Five Seeds
+Evaluating N = 5 random seeds limits the mathematical
+power of non-parametric statistical tests (pmin = 0.0625).
+E. Static Architecture Limitations
+Evaluated GNNs operate on static graph snapshots
+rather than continuous-time dynamic graphs.
+F. Homogeneous Graph Assumptions
+Transactions and payment flows are modeled as homo-
+geneous graphs, omitting heterogeneous entity types [19].
+G. Dataset-Specific Generalization Boundaries
+Conclusions are established on the Elliptic Bitcoin
+dataset and require validation on other blockchain net-
+works.
+H. Discrete Temporal Snapshots
+Transactions are aggregated into 2-week snapshots
+rather than continuous transaction streams.
+X. Conclusion and Future Work
+A. Conclusion
+This study presented a controlled empirical comparison
+of Graph Neural Networks and conventional tabular ma-
+chine learning on the Elliptic Bitcoin dataset under chrono-
+logical partitioning. Tree ensembles (Random Forest and
+XGBoost) demonstrated strong performance on the full
+feature representation, benefiting consistently from 1-hop
+topological aggregates. In contrast, GNN performance
+proved highly sensitive to graph directionality, unlabeled
+context, layer depth, and parameter initialization. Spatial
+graph convolution does not automatically guarantee su-
+periority over well-engineered tabular models in financial
+transaction forensics.
+B. Future Work
+Future research should explore continuous-time dy-
+namic graph neural networks [33], [34], heterogeneous
+transaction graphs, and drift-adaptive online learning
+mechanisms.
+Acknowledgment
+The authors acknowledge the creators of the Elliptic
+dataset for providing the benchmark data.
+References
+[1] S. Foley, J. R. Karlsen, and T. J. Putniņš, “Sex, drugs, and
+Bitcoin: How much illegal activity is financed through cryp-
+tocurrencies?” The Review of Financial Studies, vol. 32, no. 5,
+pp. 1798–1853, 2019.
+[2] S. Meiklejohn, M. Pomarole, G. Jordan, K. Levchenko, D. Mc-
+Coy, G. M. Voelker, and S. Savage, “A fistful of Bitcoins:
+Characterizing payments among men with no names,” in Pro-
+ceedings of the 2013 ACM SIGCOMM Conference on Internet
+Measurement (IMC ’13).
+ACM, 2013, pp. 127–140.
+[3] M. Möser, R. Böhme, and D. Breuker, “An inquiry into money
+laundering tools in the Bitcoin ecosystem,” in 2013 APWG
+eCrime Researchers Summit (eCRS).
+IEEE, 2013, pp. 1–14.
+[4] M. A. Harlev, H. Sun Yin, K. C. Langenheldt, R. Mukkamala,
+and R. Vatrapu, “Breaking bad: De-anonymising entity types
+on the Bitcoin blockchain,” in 2018 Crypto Valley Conference
+on Blockchain Technology (CVCBT).
+IEEE, 2018, pp. 8–18.
+[5] Y. Hu, S. Sahoo, K. Wang, and M. Mayhew, “Transaction-
+based classification and detection of Bitcoin illicit entities,” in
+2019 IEEE International Conference on Data Mining Workshops
+(ICDMW).
+IEEE, 2019, pp. 83–90.
+[6] F. Reid and M. Harrigan, “An analysis of anonymity in the
+Bitcoin system,” in Security and Privacy in Social Networks,
+Y. Altshuler, Y. Elovici, A. B. Cremers, N. Aharony, and
+A. Pentland, Eds.
+Springer, 2013, pp. 197–223.
+[7] H. He and E. A. Garcia, “Learning from imbalanced data,”
+IEEE Transactions on Knowledge and Data Engineering, vol. 21,
+no. 9, pp. 1263–1284, 2009.
+[8] M. Weber, G. Domeniconi, J. Chen, D. K. I. Weidele, C. Bellei,
+T. Robinson, and C. W. Shen, “Anti-money laundering in
+Bitcoin: Experimenting with graph convolutional networks for
+anomaly detection,” arXiv preprint arXiv:1908.02591, 2019,
+presented at the KDD 2019 Workshop on Applied Data Science
+for
+Developing
+Economies
+(ADS-DE).
+[Online].
+Available:
+https://arxiv.org/abs/1908.02591
+[9] J.
+Gama,
+I.
+Žliobaitě,
+A.
+Bifet,
+M.
+Pechenizkiy,
+and
+A. Bouchachia, “A survey on concept drift adaptation,” ACM
+Computing Surveys, vol. 46, no. 4, pp. 44:1–44:37, 2014.
+[10] J. Quiñonero-Candela, M. Sugiyama, A. Schwaighofer, and N. D.
+Lawrence, Eds., Dataset Shift in Machine Learning.
+The MIT
+Press, 2009.
+
+--- PAGE 10 ---
+TABLE XII
+Research Question Answer Matrix
+RQ ID
+Core Investigation
+Quantitative Finding
+Principal Scientific Conclusion
+RQ1
+GNN vs. Tabular Perfor-
+mance
+RF F1: 0.7247, XGB F1: 0.7131
+vs. GAT: 0.3308, SAGE: 0.2822,
+GCN: 0.2589
+Tree ensembles outperformed GNNs under the
+evaluated setup; graph convolution did not auto-
+matically surpass tabular models.
+RQ2
+Feature Space & Loss For-
+mulations
+1-Hop Features: +0.03 to +0.04
+for trees, +0.09 for GAT, −0.13
+for SAGE
+Aggregated features benefit tree models consis-
+tently, while GNN responses are architecture-
+dependent.
+RQ3
+Topological Context, Direc-
+tion & Depth
+Unknowns: GCN/SAGE +0.13–
++0.20 without unknowns; GAT
++0.04 with unknowns
+GNN sensitivity to unlabeled context, directional-
+ity, and depth is architecture-specific.
+RQ4
+Temporal Shift, Seed Vari-
+ance & Errors
+Val-to-Test
+drop:
+−23.6%
+to
+−44.9%; GNN seed range up to
+0.4686
+Severe temporal non-stationarity and initialization
+sensitivity impact model reliability.
+[11] M. M. Bronstein, J. Bruna, Y. LeCun, A. Szlam, and P. Van-
+dergheynst, “Geometric deep learning: Going beyond Euclidean
+data,” IEEE Signal Processing Magazine, vol. 34, no. 4, pp. 18–
+42, 2017.
+[12] Z. Wu, S. Pan, F. Chen, G. Long, C. Zhang, and P. S. Yu,
+“A comprehensive survey on graph neural networks,” IEEE
+Transactions on Neural Networks and Learning Systems, vol. 32,
+no. 1, pp. 4–24, 2020.
+[13] T. N. Kipf and M. Welling, “Semi-supervised classification with
+graph convolutional networks,” in 5th International Conference
+on Learning Representations (ICLR 2017), 2017. [Online].
+Available: https://openreview.net/forum?id=SJU4ayaqe
+[14] W.
+L.
+Hamilton,
+R.
+Ying,
+and
+J.
+Leskovec,
+“Inductive
+representation
+learning
+on
+large
+graphs,”
+in
+Advances
+in
+Neural
+Information
+Processing
+Systems
+(NeurIPS
+2017),
+vol.
+30,
+2017,
+pp.
+1024–1034.
+[Online]. Available: https://proceedings.neurips.cc/paper/2017/
+hash/5dd9db5e033da9c6fb5ba83c7a7ebea9-Abstract.html
+[15] P.
+Veličković,
+G.
+Cucurull,
+A.
+Casanova,
+A.
+Romero,
+P. Liò, and Y. Bengio, “Graph attention networks,” in 6th
+International Conference on Learning Representations (ICLR
+2018), 2018. [Online]. Available: https://openreview.net/forum?
+id=rJXMpikCZ
+[16] L. Grinsztajn, E. Oyallon, and G. Varoquaux, “Why do tree-
+based models still outperform deep learning on typical tabular
+data?” Advances in Neural Information Processing Systems
+(NeurIPS 2022), vol. 35, pp. 507–520, 2022. [Online]. Available:
+https://proceedings.neurips.cc/paper_files/paper/2022/hash/
+0378c7692da36807b1c531f6cdc8c41d-Abstract-Datasets_and_
+Benchmarks.html
+[17] R. Shwartz-Ziv and A. Armon, “Tabular data: Deep learning is
+not all you need,” Information Fusion, vol. 81, pp. 84–90, 2022.
+[18] F. Errica, M. Podda, D. Bacciu, and A. Micheli, “A fair
+comparison of graph neural networks for graph classification,”
+in 8th International Conference on Learning Representations
+(ICLR 2020), 2020. [Online]. Available: https://openreview.
+net/forum?id=HygDF6NFPB
+[19] D. Arp, E. Quiring, F. Pendlebury, A. Warnecke, F. Pierazzi,
+C.
+Dos
+Santos,
+L.
+Cavallaro,
+and
+K.
+Rieck,
+“Dos
+and
+don’ts of machine learning in computer security,” in 31st
+USENIX Security Symposium (USENIX Security 22). USENIX
+Association, 2022, pp. 3971–3988. [Online]. Available: https://
+www.usenix.org/conference/usenixsecurity22/presentation/arp
+[20] J. Davis and M. Goadrich, “The relationship between Precision-
+Recall and ROC curves,” in Proceedings of the 23rd Interna-
+tional Conference on Machine Learning (ICML ’06).
+ACM,
+2006, pp. 233–240.
+[21] T. Saito and M. Rehmsmeier, “The Precision-Recall plot is
+more informative than the ROC plot when evaluating binary
+classifiers on imbalanced datasets,” PLOS ONE, vol. 10, no. 3,
+p. e0118432, 2015.
+[22] L. Breiman, “Random forests,” Machine Learning, vol. 45, no. 1,
+pp. 5–32, 2001.
+[23] T. Chen and C. Guestrin, “XGBoost: A scalable tree boosting
+system,” in Proceedings of the 22nd ACM SIGKDD Interna-
+tional Conference on Knowledge Discovery and Data Mining
+(KDD ’16).
+ACM, 2016, pp. 785–794.
+[24] S.
+Holm,
+“A
+simple
+sequentially
+rejective
+multiple
+test
+procedure,” Scandinavian Journal of Statistics, vol. 6, no. 2,
+pp. 65–70, 1979. [Online]. Available: https://www.jstor.org/
+stable/4615733
+[25] F. Wilcoxon, “Individual comparisons by ranking methods,”
+Biometrics Bulletin, vol. 1, no. 6, pp. 80–83, 1945.
+[26] J. Demšar, “Statistical comparisons of classifiers over multiple
+data sets,” Journal of Machine Learning Research, vol. 7,
+pp. 1–30, 2006. [Online]. Available: https://jmlr.org/papers/
+v7/demsar06a.html
+[27] Q. Li, Z. Han, and X.-M. Wu, “Deeper insights into graph convo-
+lutional networks for semi-supervised learning,” in Proceedings
+of the Thirty-Second AAAI Conference on Artificial Intelligence
+(AAAI-18), vol. 32, no. 1.
+AAAI Press, 2018, pp. 3538–3545.
+[28] K.
+Oono
+and
+T.
+Suzuki,
+“Graph
+neural
+networks
+exponentially
+lose
+expressive
+power
+for
+node
+classifi-
+cation,”
+in
+8th
+International
+Conference
+on
+Learning
+Representations
+(ICLR
+2020),
+2020.
+[Online].
+Available:
+https://openreview.net/forum?id=S1ldO2EFPr
+[29] D. Chen, Y. Lin, W. Li, P. Li, J. Zhou, and X. Sun, “Mea-
+suring and relieving over-smoothing problem for graph neural
+networks,” in Proceedings of the 13th International Conference
+on Web Search and Data Mining (WSDM ’20).
+ACM, 2020,
+pp. 132–140.
+[30] J. Cohen, Statistical Power Analysis for the Behavioral Sciences,
+2nd ed.
+Lawrence Erlbaum Associates, 1988.
+[31] D. Lakens, “Calculating and reporting effect sizes to facilitate
+cumulative science: A practical primer for t-tests and ANOVAs,”
+Frontiers in Psychology, vol. 4, p. 863, 2013.
+[32] J. Wang, V. S. Sheng, C. Cortes, and M. Mohri, “A survey
+on graph neural networks for financial fraud detection,” ACM
+Computing Surveys, 2021.
+[33] E.
+Rossi,
+B.
+Zhou,
+F.
+Monti,
+F.
+Frasca,
+U.
+Alon,
+and
+M. M. Bronstein, “Temporal graph networks for deep learning
+on dynamic graphs,” arXiv preprint arXiv:2006.10637, 2020.
+[Online]. Available: https://arxiv.org/abs/2006.10637
+[34] D. Xu, C. Ruan, E. Korpeoglu, S. Kumar, and K. Achan,
+“Inductive representation learning on temporal graphs,” in
+8th International Conference on Learning Representations
+(ICLR 2020), 2020. [Online]. Available: https://openreview.
+net/forum?id=rJeNd0NKhS

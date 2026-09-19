@@ -1,0 +1,4 @@
+class_label,node_count,in_degree_mean,in_degree_median,in_degree_max,out_degree_mean,out_degree_median,out_degree_max,total_degree_mean,total_degree_median,total_degree_max,zero_degree_count,zero_degree_pct
+Illicit,4545,1.26996699669967,1.0,177,0.7416941694169417,1.0,3,2.0116611661166117,1.0,177,0,0.0
+Licit,42019,1.9093981294176443,1.0,284,1.1858207001594516,1.0,472,3.095218829577096,2.0,473,0,0.0
+Unknown,157205,0.9436849972965237,1.0,212,1.1523615661079483,1.0,122,2.096046563404472,2.0,212,0,0.0

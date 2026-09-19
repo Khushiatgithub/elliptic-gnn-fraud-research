@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+@theme {
+  --color-lab-bg: #080a10;
+  --color-lab-surface: #0f1320;
+  --color-lab-card: #141a2b;
+  --color-lab-border: #1f2940;
+  --color-lab-borderLight: #2a3754;
+  --color-lab-muted: #627294;
+  --color-lab-text: #f1f5f9;
+  --color-lab-heading: #ffffff;
+  --color-lab-illicit: #f43f5e;
+  --color-lab-licit: #10b981;
+  --color-lab-unknown: #64748b;
+  --color-lab-accent: #6366f1;
+  --color-lab-accentCyan: #38bdf8;
+  --color-lab-accentGold: #f59e0b;
+}
+
+body {
+  background-color: #080a10;
+  color: #f1f5f9;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Custom minimal scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0b0e17;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1f2940;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #2d3b5b;
+}
+
+/* Glass & Card Utilities */
+.lab-card {
+  background-color: #0f1320;
+  border: 1px solid #1f2940;
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+  transition: all 0.2s ease-in-out;
+}
+
+.lab-card-hover:hover {
+  border-color: #2a3754;
+  background-color: #141a2b;
+}
+
+.lab-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}

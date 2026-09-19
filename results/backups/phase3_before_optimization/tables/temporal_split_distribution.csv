@@ -1,0 +1,5 @@
+Split,Timestep Range,Total Samples,Licit Count (Class 0),Illicit Count (Class 1),Illicit Rate (%),Imbalance Ratio (Licit:Illicit)
+Training,1–34,29894,26432,3462,11.58,7.63:1
+Validation,35–39,5486,5039,447,8.15,11.27:1
+Test,40–49,11184,10548,636,5.69,16.58:1
+Total Labeled Set,1–49,46564,42019,4545,9.76,9.25:1

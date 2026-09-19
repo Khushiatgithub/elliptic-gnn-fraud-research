@@ -1,0 +1,30 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pytest_cache/
+
+# Node & Frontend dependencies
+node_modules/
+frontend/node_modules/
+frontend/dist/
+dist/
+.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Large dataset raw features (exceeds GitHub 100MB file limit)
+data/raw/elliptic_bitcoin_dataset/elliptic_txs_features.csv
+
+# Binaries and scratch utilities
+scratch/bin/
+scratch/pdf_out/
+*.tmp
+
+# Environment variables and OS files
+.env
+.env.local
+.DS_Store
+Thumbs.db
+*.log

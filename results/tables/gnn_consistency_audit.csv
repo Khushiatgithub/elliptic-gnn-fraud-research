@@ -1,0 +1,7 @@
+model,feature_mode,feature_space,num_seeds,recomputed_test_f1_mean,recomputed_test_f1_std,table_test_f1_mean,table_test_f1_std,mean_difference,status
+GAT,full,Full Features (165),5,0.3308,0.0602,0.3308,0.0602,0.0,MATCH
+GAT,local,Local Only (93),5,0.2367,0.0586,0.2367,0.0586,0.0,MATCH
+GCN,full,Full Features (165),5,0.2589,0.0639,0.2589,0.0639,0.0,MATCH
+GCN,local,Local Only (93),5,0.2559,0.0674,0.2559,0.0674,0.0,MATCH
+GraphSAGE,full,Full Features (165),5,0.2822,0.1248,0.2822,0.1248,0.0,MATCH
+GraphSAGE,local,Local Only (93),5,0.4153,0.1914,0.4153,0.1914,0.0,MATCH

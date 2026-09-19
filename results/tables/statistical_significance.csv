@@ -1,0 +1,9 @@
+Baseline Model,GNN Model,Metric,GNN Mean ± Std,Baseline Mean ± Std,Mean Difference (Δ),Paired t-stat,t-test p-value,Wilcoxon p-value,Cohen's d,Statistically Significant (p < 0.05)
+"Random Forest (Full 165, Standard)",GraphSAGE (Local Only (93)),Test Illicit F1,0.4153 ± 0.1712,0.7247 ± 0.0024,-0.3094,-3.5917,2.2928e-02,6.2500e-02,-1.61,YES
+"Random Forest (Full 165, Standard)",GraphSAGE (Local Only (93)),Test PR-AUC,0.3659 ± 0.1662,0.6599 ± 0.0023,-0.2940,-3.5141,2.4581e-02,6.2500e-02,-1.57,YES
+"XGBoost (Full 165, Weighted)",GraphSAGE (Local Only (93)),Test Illicit F1,0.4153 ± 0.1712,0.7197 ± 0.0066,-0.3044,-3.5092,2.4689e-02,6.2500e-02,-1.57,YES
+"XGBoost (Full 165, Weighted)",GraphSAGE (Local Only (93)),Test PR-AUC,0.3659 ± 0.1662,0.6723 ± 0.0035,-0.3064,-3.7246,2.0392e-02,6.2500e-02,-1.67,YES
+"MLP (Full 165, Standard)",GraphSAGE (Local Only (93)),Test Illicit F1,0.4153 ± 0.1712,0.5848 ± 0.0174,-0.1695,-1.8872,1.3218e-01,3.1250e-01,-0.84,NO
+"MLP (Full 165, Standard)",GraphSAGE (Local Only (93)),Test PR-AUC,0.3659 ± 0.1662,0.5115 ± 0.0167,-0.1456,-1.6440,1.7553e-01,3.1250e-01,-0.74,NO
+"Logistic Regression (Full 165, Weighted)",GraphSAGE (Local Only (93)),Test Illicit F1,0.4153 ± 0.1712,0.3480 ± 0.0000,+0.0673,0.7856,4.7603e-01,8.1250e-01,0.35,NO
+"Logistic Regression (Full 165, Weighted)",GraphSAGE (Local Only (93)),Test PR-AUC,0.3659 ± 0.1662,0.2197 ± 0.0000,+0.1462,1.7584,1.5351e-01,3.1250e-01,0.79,NO

@@ -1,0 +1,8 @@
+Category,Count,Percentage,Mean In-Degree,Mean Out-Degree
+Total Test Nodes,11184,100.00%,2.06,1.26
+True Positives (TP),402,3.59%,0.87,0.70
+True Negatives (TN),8165,73.01%,2.38,1.34
+False Positives (FP),2383,21.31%,1.23,1.13
+False Negatives (FN),234,2.09%,1.61,0.87
+High-Confidence False Positives (p >= 0.80),0,0.00%,0.00,0.00
+High-Confidence False Negatives (p <= 0.20),0,0.00%,0.00,0.00
