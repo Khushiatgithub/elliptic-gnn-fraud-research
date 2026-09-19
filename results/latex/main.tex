@@ -16,7 +16,7 @@
     pdftitle={Graph Neural Networks versus Tabular Machine Learning for Illicit Transaction Detection in Bitcoin: An Empirical Evaluation under Chronological Partitioning},
     pdfauthor={Khushi},
     pdfsubject={Blockchain Forensics and Graph Neural Networks},
-    pdfkeywords={Bitcoin, illicit transaction detection, fraud detection, graph neural networks, GraphSAGE, GCN, GAT, tabular machine learning, temporal generalization, class imbalance}
+    pdfkeywords={Bitcoin, illicit transaction detection, graph neural networks, GraphSAGE, GCN, GAT, tabular machine learning, temporal generalization, class imbalance}
 }
 
 
@@ -41,7 +41,7 @@ The detection of illicit transactions in public cryptocurrency ledgers is a crit
 \end{abstract}
 
 \begin{IEEEkeywords}
-Bitcoin, illicit transaction detection, fraud detection, graph neural networks, GraphSAGE, GCN, GAT, tabular machine learning, temporal generalization, class imbalance.
+Bitcoin, illicit transaction detection, graph neural networks, GraphSAGE, GCN, GAT, tabular machine learning, temporal generalization, class imbalance.
 \end{IEEEkeywords}
 
 \section{Introduction}
@@ -52,7 +52,7 @@ Decentralized blockchain protocols, most prominently Bitcoin, have introduced tr
 In response, regulatory bodies and cryptocurrency analytics firms have invested heavily in automated blockchain forensic systems to identify anomalous and illicit transactional behavior \cite{harlev2018breaking, hu2019transaction}. Forensic analysis is made possible by the public availability of the Bitcoin transaction graph, where addresses and transactions form a directed, timestamped acyclic graph of value transfers \cite{reid2013analysis, meiklejohn2013fistful}.
 
 \subsection{Problem Definition and Class Imbalance}
-The automated identification of fraudulent entities in cryptocurrency transaction graphs represents a specialized supervised node classification problem under severe label skew and temporal non-stationarity. In practice, confirmed illicit transactions constitute a minute fraction of total transaction volume ($< 2\%$), while legitimate commercial transfers, exchange arbitrage, and mining payouts dominate the network \cite{moser2013inquiry, he2009learning}. Furthermore, in public benchmarks such as the Elliptic Bitcoin dataset \cite{weber2019elliptic}, over $77\%$ of transactions lack deanonymized ground-truth labels. 
+The automated identification of illicit transactions in cryptocurrency transaction graphs represents a specialized supervised node classification problem under severe label skew and temporal non-stationarity. In practice, confirmed illicit transactions constitute a minute fraction of total transaction volume ($< 2\%$), while legitimate commercial transfers, exchange arbitrage, and mining payouts dominate the network \cite{moser2013inquiry, he2009learning}. Furthermore, in public benchmarks such as the Elliptic Bitcoin dataset \cite{weber2019elliptic}, over $77\%$ of transactions lack deanonymized ground-truth labels. 
 
 Forensic classification systems must therefore generalize under three compounding constraints:
 \begin{enumerate}
@@ -174,9 +174,9 @@ Total Graph Edges & 156,589 & 27,243 & 50,523 & 234,355 \\
 We benchmark against four conventional machine learning baselines:
 \begin{itemize}
     \item \textbf{Logistic Regression (LR):} Linear classification optimized via L-BFGS with $L_2$ regularization ($C = 1.0$).
-    \item \textbf{Random Forest (RF):} Bagged ensemble of 100 decision trees (\texttt{n\_estimators=100}, \texttt{max\_depth=None}, \texttt{min\_samples\_split=2}) \cite{breiman2001random}.
+    \item \textbf{Random Forest (RF):} Bagged ensemble of 100 decision trees (\texttt{n\_estimators=100}, \texttt{max\_depth=15}, \texttt{min\_samples\_split=5}, \texttt{min\_samples\_leaf=2}) \cite{breiman2001random}.
     \item \textbf{XGBoost:} Gradient-boosted decision trees (\texttt{n\_estimators=100}, \texttt{max\_depth=6}, \texttt{learning\_rate=0.1}, \texttt{subsample=0.8}, \texttt{colsample\_bytree=0.8}) \cite{chen2016xgboost}.
-    \item \textbf{Multi-Layer Perceptron (MLP):} Deep neural network with 2 hidden layers (128 units each), ReLU activations, Dropout ($p=0.3$), Batch Normalization, trained via Adam ($lr=0.001$, weight decay $10^{-5}$).
+    \item \textbf{Multi-Layer Perceptron (MLP):} Deep neural network with hidden dimensions $[128, 64]$, ReLU activations, Dropout ($p=0.2$), Batch Normalization, trained via Adam ($lr=0.001$, weight decay $10^{-4}$, batch size 256, maximum epochs 40, early stopping patience 7).
 \end{itemize}
 
 \subsection{Graph Neural Network Architectures}
@@ -198,7 +198,7 @@ We evaluate three foundational Graph Neural Network architectures:
     \label{eq:gat}
     \end{equation}
 \end{itemize}
-All GNN models employ 2 message-passing layers, 128 hidden channels, Dropout ($p=0.3$), and Adam optimizer ($lr=0.001$). GAT utilizes 4 attention heads (32 channels per head). Hyperparameter details are provided in Table II.
+The primary GNN benchmark configuration uses two message-passing layers for all three architectures; a separate depth ablation evaluates one-, two-, and three-layer variants. GNNs employ 128 hidden channels, Dropout ($p=0.3$), and Adam optimizer ($lr=0.001$, weight decay $10^{-4}$). GAT utilizes 8 attention heads with 16 channels per head in the multi-head layer ($8 \times 16 = 128$). Hyperparameter details are provided in Table II.
 
 \begin{table}[htbp]
 \centering
@@ -211,12 +211,12 @@ All GNN models employ 2 message-passing layers, 128 hidden channels, Dropout ($p
 \textbf{Model} & \textbf{Family} & \textbf{Key Hyperparameters} \\
 \midrule
 Logistic Reg. & Linear & $C=1.0$, $L_2$ penalty, L-BFGS solver \\
-Random Forest & Bagged Trees & 100 trees, unlimited depth, Gini split \\
+Random Forest & Bagged Trees & 100 trees, depth 15, split 5, leaf 2 \\
 XGBoost & Boosting & 100 trees, depth 6, lr 0.1, sub 0.8 \\
-MLP & Neural Net & 2 layers, 128 units, Dropout 0.3, Adam \\
+MLP & Neural Net & Layers [128, 64], Dropout 0.2, Adam, bs 256 \\
 GCN & Graph Conv & 2 layers, 128 hidden, Adam ($10^{-3}$) \\
 GraphSAGE & Inductive GNN & 2 layers, 128 hidden, Mean aggregate \\
-GAT & Attention GNN & 2 layers, 128 hidden, 4 heads (32/head) \\
+GAT & Attention GNN & 2 layers, 128 hidden, 8 heads (16/head) \\
 \bottomrule
 \end{tabular}
 }
@@ -231,7 +231,7 @@ We evaluate unweighted cross-entropy alongside cost-sensitive class weighting ($
 \end{equation}
 
 \subsection{Training and Threshold Locking Protocol}
-Models are trained for 100 epochs on Timesteps 1--34 with Early Stopping (patience = 15) monitoring validation illicit F1 on Timesteps 35--39. Decision thresholds are tuned strictly on the validation partition ($\tau^* = \arg\max \text{F1}_{\text{val}}$) and locked prior to blind evaluation on Timesteps 40--49.
+During model optimization, the GNN trainer executes full-batch message passing on Timesteps 1--34 with Early Stopping (patience = 15 epochs) monitoring validation PR-AUC on Timesteps 35--39. When validation PR-AUC ceases to improve for 15 evaluations, training terminates and the checkpoint achieving the highest validation PR-AUC is restored. Next, decision threshold optimization is conducted on the restored model to maximize illicit-class F1 on the validation set ($\tau^* = \arg\max \text{F1}_{\text{val}}$). This optimal threshold is then frozen and evaluated on the blind test holdout partition (Timesteps 40--49).
 
 \subsection{Statistical Significance Testing Protocol}
 All non-deterministic architectures are evaluated across $N = 5$ random seeds ($S = \{42, 123, 456, 789, 999\}$). Statistical comparisons between the validation-selected GNN and baselines employ two-sided paired $t$-tests with Holm-Bonferroni correction \cite{holm1979simple} and exact paired Wilcoxon signed-rank tests \cite{wilcoxon1945individual, demsar2006statistical}.
@@ -396,11 +396,11 @@ GraphSAGE (Local 93) & 0.2583 & 0.6252 & 0.3669 & $0.4153 \pm 0.1914$ \\
 \section{Ablation and Sensitivity Analysis}
 
 \subsection{Impact of Unlabeled Graph Context}
-Table VII and Fig. 6 present the ablation comparing the full $100\%$ topology against an induced subgraph of labeled nodes only:
+Table VII and Fig. 6 present the ablation comparing the full $100\%$ topology (retaining unlabeled nodes) against an induced subgraph of labeled nodes only (removing unknown nodes), defining $\Delta\text{F1} = \text{Retained} - \text{Removed}$:
 \begin{itemize}
-    \item For GCN, removing unknown nodes increased test illicit F1 from $0.2589$ to $0.4555$ ($\Delta = +0.1966$).
-    \item For GraphSAGE, removing unknown nodes increased F1 from $0.2822$ to $0.4132$ ($\Delta = +0.1310$).
-    \item For GAT, retaining unknown nodes produced higher F1 ($0.3308$ vs. $0.2918$).
+    \item For GAT, retaining unknown nodes improved test illicit F1 from $0.2918$ to $0.3308$ ($\Delta\text{F1} = +0.0390$), indicating that attention mechanisms successfully filter uninformative connections.
+    \item For GCN, retaining unknown nodes degraded test illicit F1 from $0.4555$ to $0.2589$ ($\Delta\text{F1} = -0.1966$).
+    \item For GraphSAGE, retaining unknown nodes degraded test illicit F1 from $0.4132$ to $0.2822$ ($\Delta\text{F1} = -0.1310$), reflecting noise injection during neighborhood aggregation.
 \end{itemize}
 
 \begin{table}[htbp]
@@ -413,9 +413,9 @@ Table VII and Fig. 6 present the ablation comparing the full $100\%$ topology ag
 \toprule
 \textbf{Architecture} & \textbf{Retained F1} & \textbf{Removed F1} & \textbf{$\Delta$F1} & \textbf{Trend} \\
 \midrule
-GAT & $0.3308 \pm 0.0602$ & $0.2918 \pm 0.0521$ & $-0.0390$ & Retained Higher \\
-GCN & $0.2589 \pm 0.0639$ & $0.4555 \pm 0.0524$ & $+0.1966$ & Removed Higher \\
-GraphSAGE & $0.2822 \pm 0.1248$ & $0.4132 \pm 0.0514$ & $+0.1310$ & Removed Higher \\
+GAT & $0.3308 \pm 0.0602$ & $0.2918 \pm 0.0521$ & $+0.0390$ & Retained Higher \\
+GCN & $0.2589 \pm 0.0639$ & $0.4555 \pm 0.0524$ & $-0.1966$ & Removed Higher \\
+GraphSAGE & $0.2822 \pm 0.1248$ & $0.4132 \pm 0.0514$ & $-0.1310$ & Removed Higher \\
 \bottomrule
 \end{tabular}
 }
@@ -537,7 +537,7 @@ It is therefore mathematically impossible for a two-sided Wilcoxon test with $N=
 \section{Error and Graph-Structural Analysis}
 
 \subsection{Error Taxonomy and Degree Disparity}
-Table XI details error distributions and connectivity across the $11,184$ test nodes ($402$ TP, $8,165$ TN, $2,383$ FP, $234$ FN):
+Table XI details the error taxonomy and graph connectivity for the validation-selected GraphSAGE model using the Local 93-feature configuration across the $11,184$ test nodes ($402$ TP, $8,165$ TN, $2,383$ FP, $234$ FN):
 \begin{itemize}
     \item True Negatives had the highest connectivity (mean in-degree $2.38$, out-degree $1.34$).
     \item True Positives had the lowest connectivity (mean in-degree $0.87$, out-degree $0.70$).
@@ -546,7 +546,7 @@ Table XI details error distributions and connectivity across the $11,184$ test n
 
 \begin{table}[htbp]
 \centering
-\caption{Error and Graph-Structural Taxonomy (Test Set, $N = 11,184$)}
+\caption{Error and Graph-Structural Taxonomy for Validation-Selected GraphSAGE (Local 93 Features, Test Set, $N = 11,184$)}
 \label{tab:error_taxonomy}
 {\small
 \resizebox{\columnwidth}{!}{
@@ -627,11 +627,11 @@ While raw paired $t$-tests indicated differences favoring tree ensembles ($p_{\t
 \subsection{Structural Profiles of Model Misclassifications}
 True positives exhibited lower connectivity (mean degree $< 1.0$) than true negatives (mean degree $> 2.0$), indicating that isolated illicit nodes present unique forensic detection challenges.
 
-\subsection{Darknet Market Dynamics and Timestep 43 Non-Stationarity}
-The sharp drop in illicit transaction volume at Timestep 43 underscores the vulnerability of static forensic models to sudden macroeconomic and law enforcement interventions \cite{weber2019elliptic, arp2022dos}.
+\subsection{Temporal Non-Stationarity and Timestep 43 Regime Change}
+The sharp change in illicit prevalence around timestep 43 coincides with a substantial reduction in per-timestep illicit prevalence ($11.10\% \to 1.75\%$) and a corresponding degradation in model F1 (dropping from $0.5234$ to $0.0718$). Because the dataset provides anonymized discrete timesteps rather than verified event annotations, the cause of this regime change cannot be established from the benchmark alone.
 
-\subsection{Practical Implications for Industry and Regulators}
-In production compliance environments, well-tuned gradient boosting ensembles with engineered topological aggregates offer strong detection capability, low inference latency, and high parameter stability.
+\subsection{Practical Implications for Transaction Forensics}
+In this evaluated benchmark, well-tuned tree ensembles (Random Forest and XGBoost) combined with 1-hop pre-aggregated topological features demonstrated strong detection capability and high parameter stability across seeds. However, establishing production readiness in live compliance systems requires additional evaluation of inference latency, probability calibration, continuous temporal drift, operational deployment constraints, and streaming data quality.
 
 \begin{table*}[t]
 \centering
@@ -658,7 +658,7 @@ Features in the Elliptic benchmark are fully anonymized, precluding domain-speci
 $77.15\%$ of transactions lack labels, limiting full relational ground truth.
 
 \subsection{Temporal Non-Stationarity and Regime Shifts}
-Adversarial adaptation and darknet market disruptions introduce substantial concept drift \cite{gama2014survey, quinonero2009dataset}.
+Temporal distribution shift and sudden changes in illicit transaction prevalence introduce substantial concept drift across chronological snapshots \cite{gama2014survey, quinonero2009dataset}.
 
 \subsection{Statistical Power Constraints with Five Seeds}
 Evaluating $N=5$ random seeds limits the mathematical power of non-parametric statistical tests ($p_{\min} = 0.0625$).
